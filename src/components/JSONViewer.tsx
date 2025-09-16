@@ -236,7 +236,7 @@ export default function JSONViewer({ onClose }: JSONViewerProps) {
                   placeholder="Search by product name, ID, or filename..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                 />
               </div>
             </div>
@@ -244,7 +244,7 @@ export default function JSONViewer({ onClose }: JSONViewerProps) {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value as any)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
             >
               <option value="all">All Types</option>
               <option value="species">Species Files</option>
@@ -393,7 +393,7 @@ export default function JSONViewer({ onClose }: JSONViewerProps) {
                       <textarea
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
-                        className="flex-1 p-4 font-mono text-sm border-none resize-none focus:outline-none"
+                        className="flex-1 p-4 font-mono text-sm border-none resize-none focus:outline-none bg-white text-gray-900"
                         placeholder="Enter valid JSON content..."
                       />
                     </div>

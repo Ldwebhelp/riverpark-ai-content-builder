@@ -163,7 +163,7 @@ export default function NewJobModal({ onClose, onSubmit }: NewJobModalProps) {
                 max="100"
                 value={batchSize}
                 onChange={(e) => setBatchSize(parseInt(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
               />
             </div>
             <div>
@@ -176,7 +176,7 @@ export default function NewJobModal({ onClose, onSubmit }: NewJobModalProps) {
                 max="20"
                 value={concurrent}
                 onChange={(e) => setConcurrent(parseInt(e.target.value))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
               />
             </div>
           </div>
@@ -190,7 +190,7 @@ export default function NewJobModal({ onClose, onSubmit }: NewJobModalProps) {
               <select
                 value={fishFamily}
                 onChange={(e) => setFishFamily(e.target.value as FishFamily)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
               >
                 {FISH_FAMILIES.map(family => (
                   <option key={family} value={family}>
@@ -206,7 +206,7 @@ export default function NewJobModal({ onClose, onSubmit }: NewJobModalProps) {
               <select
                 value={templateType}
                 onChange={(e) => setTemplateType(e.target.value as TemplateType)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
               >
                 {TEMPLATE_TYPES.map(template => (
                   <option key={template} value={template}>
@@ -227,7 +227,7 @@ export default function NewJobModal({ onClose, onSubmit }: NewJobModalProps) {
               <select
                 value={aiModel}
                 onChange={(e) => setAiModel(e.target.value as 'gpt-4' | 'gpt-4-turbo')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
               >
                 <option value="gpt-4">GPT-4</option>
                 <option value="gpt-4-turbo">GPT-4 Turbo</option>
@@ -240,7 +240,7 @@ export default function NewJobModal({ onClose, onSubmit }: NewJobModalProps) {
               <select
                 value={validation}
                 onChange={(e) => setValidation(e.target.value as 'strict' | 'moderate' | 'lenient')}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
               >
                 <option value="lenient">Lenient</option>
                 <option value="moderate">Moderate</option>
