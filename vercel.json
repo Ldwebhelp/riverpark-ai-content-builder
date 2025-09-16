@@ -1,0 +1,5 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "npm run dev",
+  "devCommand": "npm run dev --turbopack"
+}
