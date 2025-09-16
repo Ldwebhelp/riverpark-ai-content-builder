@@ -48,9 +48,14 @@ export default function JobCard({ job, onPauseResume, onCancel, compact = false 
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-3">
-          <h4 className="font-semibold text-gray-900">
-            Job {job.id.slice(-8)}
-          </h4>
+          <div>
+            <h4 className="font-semibold text-gray-900">
+              {job.categories.length > 0 ? job.categories.join(', ') : `Job ${job.id.slice(-8)}`}
+            </h4>
+            <div className="text-xs text-gray-500">
+              {job.products.length} products • Job {job.id.slice(-8)}
+            </div>
+          </div>
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[job.status]}`}>
             {job.status.charAt(0).toUpperCase() + job.status.slice(1)}
           </span>
@@ -113,6 +118,26 @@ export default function JobCard({ job, onPauseResume, onCancel, compact = false 
               {job.categories.join(', ')}
             </span>
           </div>
+
+          {/* Product Sample */}
+          {job.products.length > 0 && (
+            <div>
+              <span className="text-sm font-medium text-gray-600">Products: </span>
+              <div className="mt-1 text-sm text-gray-700">
+                {job.products.slice(0, 3).map((product) => (
+                  <div key={product.productId} className="flex items-center justify-between py-1">
+                    <span>{product.name}</span>
+                    <span className="text-xs text-gray-500">ID: {product.productId}</span>
+                  </div>
+                ))}
+                {job.products.length > 3 && (
+                  <div className="text-xs text-gray-500 italic py-1">
+                    + {job.products.length - 3} more products...
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Timing */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">

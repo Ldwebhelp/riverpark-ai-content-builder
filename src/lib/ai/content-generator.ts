@@ -17,7 +17,7 @@ export class AIContentGenerator {
 
     try {
       const prompt = this.buildPrompt(product, config);
-      const response = await this.callOpenAI(prompt);
+      const response = await this.callOpenAI(prompt, config);
       const parsedContent = this.parseOpenAIResponse(response, product, config);
 
       return parsedContent;
@@ -84,7 +84,7 @@ Generate comprehensive aquarium care information in JSON format with the followi
 Provide accurate, detailed information specific to this species. Do not use generic placeholders.`;
   }
 
-  private async callOpenAI(prompt: string): Promise<string> {
+  private async callOpenAI(prompt: string, config: ContentConfig): Promise<string> {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {

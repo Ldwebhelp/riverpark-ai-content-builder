@@ -17,6 +17,7 @@ interface DashboardProps {
 export default function Dashboard({ jobs: initialJobs, onJobUpdate }: DashboardProps) {
   const [showNewJobModal, setShowNewJobModal] = useState(false);
   const [showJSONViewer, setShowJSONViewer] = useState(false);
+  const [showProductModal, setShowProductModal] = useState<'total' | 'completed' | 'failed' | null>(null);
 
   const {
     jobs,
@@ -42,8 +43,9 @@ export default function Dashboard({ jobs: initialJobs, onJobUpdate }: DashboardP
   const completedJobs = jobs.filter(job => job.status === 'completed');
   const failedJobs = jobs.filter(job => job.status === 'failed');
 
-  const totalProgress = jobs.length > 0
-    ? jobs.reduce((acc, job) => acc + job.progress.percentage, 0) / jobs.length
+  // Calculate actual overall progress based on all products
+  const totalProgress = totalProducts > 0
+    ? Math.round((completedProducts / totalProducts) * 100)
     : 0;
 
   const totalProducts = jobs.reduce((acc, job) => acc + job.progress.total, 0);
@@ -59,6 +61,50 @@ export default function Dashboard({ jobs: initialJobs, onJobUpdate }: DashboardP
     if (newJob) {
       setShowNewJobModal(false);
     }
+  };
+
+  // Get all products by status
+  const getAllProducts = (status: 'total' | 'completed' | 'failed') => {
+    const products: Array<{productId: number, name: string, status: string, jobId: string}> = [];
+
+    jobs.forEach(job => {
+      job.products.forEach(product => {
+        if (status === 'total') {
+          products.push({
+            productId: product.productId,
+            name: product.name,
+            status: 'total',
+            jobId: job.id.slice(-8)
+          });
+        }
+      });
+
+      if (status === 'completed') {
+        // For now, we'll estimate completed products by progress
+        const completedCount = job.progress.completed;
+        job.products.slice(0, completedCount).forEach(product => {
+          products.push({
+            productId: product.productId,
+            name: product.name,
+            status: 'completed',
+            jobId: job.id.slice(-8)
+          });
+        });
+      }
+
+      if (status === 'failed' && job.errors.length > 0) {
+        job.errors.forEach(error => {
+          products.push({
+            productId: error.productId,
+            name: error.productName,
+            status: 'failed',
+            jobId: job.id.slice(-8)
+          });
+        });
+      }
+    });
+
+    return products;
   };
 
   return (
@@ -95,21 +141,34 @@ export default function Dashboard({ jobs: initialJobs, onJobUpdate }: DashboardP
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-blue-600">{totalProducts}</div>
-            <div className="text-gray-600">Total Products</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-600">{completedProducts}</div>
-            <div className="text-gray-600">Completed</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-red-600">{failedProducts}</div>
-            <div className="text-gray-600">Failed</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-purple-600">{Math.round(totalProgress)}%</div>
+          <button
+            onClick={() => setShowProductModal('total')}
+            className="text-center p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors group"
+          >
+            <div className="text-3xl font-bold text-blue-600 group-hover:text-blue-700">{totalProducts}</div>
+            <div className="text-gray-600 group-hover:text-gray-700">Total Products</div>
+            <div className="text-xs text-gray-400 mt-1">Click to view</div>
+          </button>
+          <button
+            onClick={() => setShowProductModal('completed')}
+            className="text-center p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors group"
+          >
+            <div className="text-3xl font-bold text-green-600 group-hover:text-green-700">{completedProducts}</div>
+            <div className="text-gray-600 group-hover:text-gray-700">Completed</div>
+            <div className="text-xs text-gray-400 mt-1">Click to view</div>
+          </button>
+          <button
+            onClick={() => setShowProductModal('failed')}
+            className="text-center p-4 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors group"
+          >
+            <div className="text-3xl font-bold text-red-600 group-hover:text-red-700">{failedProducts}</div>
+            <div className="text-gray-600 group-hover:text-gray-700">Failed</div>
+            <div className="text-xs text-gray-400 mt-1">Click to view</div>
+          </button>
+          <div className="text-center p-4 rounded-lg border border-gray-200 bg-purple-50">
+            <div className="text-3xl font-bold text-purple-600">{totalProgress}%</div>
             <div className="text-gray-600">Overall Progress</div>
+            <div className="text-xs text-gray-500 mt-1">{completedProducts}/{totalProducts}</div>
           </div>
         </div>
 
@@ -212,6 +271,61 @@ export default function Dashboard({ jobs: initialJobs, onJobUpdate }: DashboardP
         <JSONViewer
           onClose={() => setShowJSONViewer(false)}
         />
+      )}
+
+      {/* Product Details Modal */}
+      {showProductModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[80vh] overflow-hidden">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h3 className="text-xl font-bold text-gray-900">
+                {showProductModal === 'total' && `All Products (${totalProducts})`}
+                {showProductModal === 'completed' && `Completed Products (${completedProducts})`}
+                {showProductModal === 'failed' && `Failed Products (${failedProducts})`}
+              </h3>
+              <button
+                onClick={() => setShowProductModal(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[60vh]">
+              <div className="space-y-2">
+                {getAllProducts(showProductModal).map((product, index) => (
+                  <div
+                    key={`${product.productId}-${index}`}
+                    className={`flex items-center justify-between p-3 rounded-lg border ${
+                      product.status === 'completed' ? 'bg-green-50 border-green-200' :
+                      product.status === 'failed' ? 'bg-red-50 border-red-200' :
+                      'bg-gray-50 border-gray-200'
+                    }`}
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">{product.name}</div>
+                      <div className="text-sm text-gray-600">Product ID: {product.productId}</div>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <span className="text-sm text-gray-500">Job: {product.jobId}</span>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        product.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        product.status === 'failed' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {product.status.charAt(0).toUpperCase() + product.status.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {getAllProducts(showProductModal).length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No products found for this status.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
