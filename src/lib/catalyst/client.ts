@@ -44,11 +44,11 @@ export class CatalystClient {
 
   private async generateJSONFiles(content: AISearchContent, product: Product): Promise<boolean> {
     try {
-      const { speciesFile, aiSearchFile } = this.fileGenerator.generateBothFiles(content, product);
+      const { quickRefFile, detailsFile } = this.fileGenerator.generateBothFiles(content, product);
 
       console.log(`📁 Generated JSON files for product ${content.productId}:`);
-      console.log(`   Species: ${speciesFile}`);
-      console.log(`   AI Search: ${aiSearchFile}`);
+      console.log(`   Quick Reference: ${quickRefFile}`);
+      console.log(`   Details: ${detailsFile}`);
 
       return true;
     } catch (error) {

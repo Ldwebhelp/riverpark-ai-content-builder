@@ -14,12 +14,12 @@ export class JSONFileGenerator {
   }
 
   /**
-   * Generate [productId]-species.json file
+   * Generate [productId]-quickref.json file
    */
-  generateSpeciesJSON(content: AISearchContent, product: Product): string {
-    const speciesData = {
+  generateQuickRefJSON(content: AISearchContent, product: Product): string {
+    const quickRefData = {
       productId: content.productId,
-      type: "species",
+      type: "quickref",
       scientificName: content.basicInfo.scientificName,
       commonName: content.basicInfo.commonNames[0] || product.name,
       quickReference: [
@@ -41,24 +41,24 @@ export class JSONFileGenerator {
       }
     };
 
-    const filename = `${content.productId}-species.json`;
+    const filename = `${content.productId}-quickref.json`;
     const filepath = `${this.outputDir}/${filename}`;
 
     // Log the JSON structure for demonstration
     console.log(`\n📄 Generated ${filename}:`);
-    console.log(JSON.stringify(speciesData, null, 2));
+    console.log(JSON.stringify(quickRefData, null, 2));
 
     // In a real implementation, this would write to file system or upload to storage
-    console.log(`✅ Species file structure ready: ${filename}`);
+    console.log(`✅ Quick reference file structure ready: ${filename}`);
     return filepath;
   }
 
   /**
-   * Generate [productId]-ai-search.json file
+   * Generate [productId]-details.json file
    */
-  generateAISearchJSON(content: AISearchContent): string {
+  generateDetailsJSON(content: AISearchContent): string {
     // Use the complete AISearchContent structure as defined in types
-    const aiSearchData: AISearchContent = {
+    const detailsData: AISearchContent = {
       productId: content.productId,
       type: content.type,
       version: content.version,
@@ -72,15 +72,15 @@ export class JSONFileGenerator {
       metadata: content.metadata
     };
 
-    const filename = `${content.productId}-ai-search.json`;
+    const filename = `${content.productId}-details.json`;
     const filepath = `${this.outputDir}/${filename}`;
 
     // Log the JSON structure for demonstration
     console.log(`\n📄 Generated ${filename}:`);
-    console.log(JSON.stringify(aiSearchData, null, 2));
+    console.log(JSON.stringify(detailsData, null, 2));
 
     // In a real implementation, this would write to file system or upload to storage
-    console.log(`✅ AI search file structure ready: ${filename}`);
+    console.log(`✅ Details file structure ready: ${filename}`);
     return filepath;
   }
 
@@ -88,13 +88,13 @@ export class JSONFileGenerator {
    * Generate both files for a product
    */
   generateBothFiles(content: AISearchContent, product: Product): {
-    speciesFile: string;
-    aiSearchFile: string;
+    quickRefFile: string;
+    detailsFile: string;
   } {
-    const speciesFile = this.generateSpeciesJSON(content, product);
-    const aiSearchFile = this.generateAISearchJSON(content);
+    const quickRefFile = this.generateQuickRefJSON(content, product);
+    const detailsFile = this.generateDetailsJSON(content);
 
-    return { speciesFile, aiSearchFile };
+    return { quickRefFile, detailsFile };
   }
 
   /**
@@ -115,8 +115,8 @@ export class JSONFileGenerator {
 
     for (const { content, product } of contentList) {
       try {
-        const { speciesFile, aiSearchFile } = this.generateBothFiles(content, product);
-        files.push(speciesFile, aiSearchFile);
+        const { quickRefFile, detailsFile } = this.generateBothFiles(content, product);
+        files.push(quickRefFile, detailsFile);
         successful++;
 
         console.log(`✅ Generated files for product ${content.productId}: ${product.name}`);
@@ -160,18 +160,18 @@ export class JSONFileGenerator {
    */
   getFileStats(): {
     totalFiles: number;
-    speciesFiles: number;
-    aiSearchFiles: number;
+    quickRefFiles: number;
+    detailsFiles: number;
     outputDirectory: string;
   } {
     const files = this.listGeneratedFiles();
-    const speciesFiles = files.filter(f => f.includes('-species.json')).length;
-    const aiSearchFiles = files.filter(f => f.includes('-ai-search.json')).length;
+    const quickRefFiles = files.filter(f => f.includes('-quickref.json')).length;
+    const detailsFiles = files.filter(f => f.includes('-details.json')).length;
 
     return {
       totalFiles: files.length,
-      speciesFiles,
-      aiSearchFiles,
+      quickRefFiles,
+      detailsFiles,
       outputDirectory: this.outputDir
     };
   }
