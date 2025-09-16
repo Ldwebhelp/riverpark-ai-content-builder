@@ -6,7 +6,7 @@ import { JSONFileGenerator } from '@/lib/catalyst/file-generator';
 interface JSONFile {
   productId: number;
   productName: string;
-  type: 'species' | 'ai-search';
+  type: 'quickref' | 'details';
   filename: string;
   content: any;
   lastModified: string;
@@ -16,7 +16,7 @@ interface JSONFile {
 // In-memory storage for demo (replace with Supabase in production)
 const jsonStorage: Map<string, any> = new Map();
 
-function getStorageKey(productId: number, type: 'species' | 'ai-search'): string {
+function getStorageKey(productId: number, type: 'quickref' | 'details'): string {
   return `${productId}-${type}`;
 }
 
@@ -39,7 +39,7 @@ export async function GET() {
       const file: JSONFile = {
         productId,
         productName,
-        type: type as 'species' | 'ai-search',
+        type: type as 'quickref' | 'details',
         filename: `${productId}-${type}.json`,
         content,
         lastModified: content.generatedAt || content.metadata?.generatedAt || new Date().toISOString(),
@@ -76,32 +76,32 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    if (!['species', 'ai-search'].includes(type)) {
+    if (!['quickref', 'details'].includes(type)) {
       return NextResponse.json(
-        { error: 'Type must be either "species" or "ai-search"' },
+        { error: 'Type must be either "quickref" or "details"' },
         { status: 400 }
       );
     }
 
     // Validate JSON structure based on type
-    if (type === 'species') {
+    if (type === 'quickref') {
       if (!content.productId || !content.type || !content.quickReference) {
         return NextResponse.json(
-          { error: 'Species JSON must have productId, type, and quickReference fields' },
+          { error: 'QuickRef JSON must have productId, type, and quickReference fields' },
           { status: 400 }
         );
       }
-    } else if (type === 'ai-search') {
+    } else if (type === 'details') {
       if (!content.productId || !content.basicInfo || !content.careRequirements) {
         return NextResponse.json(
-          { error: 'AI search JSON must have productId, basicInfo, and careRequirements fields' },
+          { error: 'Details JSON must have productId, basicInfo, and careRequirements fields' },
           { status: 400 }
         );
       }
     }
 
     // Update timestamp
-    if (type === 'species') {
+    if (type === 'quickref') {
       content.generatedAt = new Date().toISOString();
     } else {
       if (!content.metadata) content.metadata = {};
@@ -191,14 +191,14 @@ export async function POST(request: NextRequest) {
 
     const results: { type: string; success: boolean }[] = [];
 
-    if (!regenerateType || regenerateType === 'species') {
+    if (!regenerateType || regenerateType === 'quickref') {
       try {
-        fileGenerator.generateSpeciesJSON(aiContent, product);
+        fileGenerator.generateQuickRefJSON(aiContent, product);
 
-        // Create species data for storage
-        const speciesData = {
+        // Create quickref data for storage
+        const quickrefData = {
           productId: aiContent.productId,
-          type: "species",
+          type: "quickref",
           scientificName: aiContent.basicInfo.scientificName,
           commonName: aiContent.basicInfo.commonNames[0] || product.name,
           quickReference: [
@@ -220,20 +220,20 @@ export async function POST(request: NextRequest) {
           }
         };
 
-        jsonStorage.set(getStorageKey(productId, 'species'), speciesData);
-        results.push({ type: 'species', success: true });
+        jsonStorage.set(getStorageKey(productId, 'quickref'), quickrefData);
+        results.push({ type: 'quickref', success: true });
       } catch (error) {
-        results.push({ type: 'species', success: false });
+        results.push({ type: 'quickref', success: false });
       }
     }
 
-    if (!regenerateType || regenerateType === 'ai-search') {
+    if (!regenerateType || regenerateType === 'details') {
       try {
-        fileGenerator.generateAISearchJSON(aiContent);
-        jsonStorage.set(getStorageKey(productId, 'ai-search'), aiContent);
-        results.push({ type: 'ai-search', success: true });
+        fileGenerator.generateDetailsJSON(aiContent);
+        jsonStorage.set(getStorageKey(productId, 'details'), aiContent);
+        results.push({ type: 'details', success: true });
       } catch (error) {
-        results.push({ type: 'ai-search', success: false });
+        results.push({ type: 'details', success: false });
       }
     }
 
@@ -257,10 +257,10 @@ export async function populateStorageFromGeneration(productId: number, aiContent
   try {
     const fileGenerator = new JSONFileGenerator();
 
-    // Generate and store species JSON
-    const speciesData = {
+    // Generate and store quickref JSON
+    const quickrefData = {
       productId: aiContent.productId,
-      type: "species",
+      type: "quickref",
       scientificName: aiContent.basicInfo.scientificName,
       commonName: aiContent.basicInfo.commonNames[0] || product.name,
       quickReference: [
@@ -282,8 +282,8 @@ export async function populateStorageFromGeneration(productId: number, aiContent
       }
     };
 
-    jsonStorage.set(getStorageKey(productId, 'species'), speciesData);
-    jsonStorage.set(getStorageKey(productId, 'ai-search'), aiContent);
+    jsonStorage.set(getStorageKey(productId, 'quickref'), quickrefData);
+    jsonStorage.set(getStorageKey(productId, 'details'), aiContent);
 
     console.log(`📁 Stored JSON files for product ${productId} in memory`);
   } catch (error) {
