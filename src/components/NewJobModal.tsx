@@ -45,7 +45,7 @@ export default function NewJobModal({ onClose, onSubmit }: NewJobModalProps) {
   const [concurrent, setConcurrent] = useState(5);
   const [fishFamily, setFishFamily] = useState<FishFamily>('community');
   const [templateType, setTemplateType] = useState<TemplateType>('community-standard');
-  const [aiModel, setAiModel] = useState<'gpt-4' | 'gpt-4-turbo'>('gpt-4');
+  const [aiModel, setAiModel] = useState<'gpt-4o' | 'gpt-4' | 'gpt-4-turbo'>('gpt-4o');
   const [validation, setValidation] = useState<'strict' | 'moderate' | 'lenient'>('moderate');
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
 
@@ -226,9 +226,10 @@ export default function NewJobModal({ onClose, onSubmit }: NewJobModalProps) {
               </label>
               <select
                 value={aiModel}
-                onChange={(e) => setAiModel(e.target.value as 'gpt-4' | 'gpt-4-turbo')}
+                onChange={(e) => setAiModel(e.target.value as 'gpt-4o' | 'gpt-4' | 'gpt-4-turbo')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
               >
+                <option value="gpt-4o">GPT-4o (Recommended)</option>
                 <option value="gpt-4">GPT-4</option>
                 <option value="gpt-4-turbo">GPT-4 Turbo</option>
               </select>

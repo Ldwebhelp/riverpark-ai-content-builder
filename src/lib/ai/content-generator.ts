@@ -11,76 +11,163 @@ export class AIContentGenerator {
     product: Product,
     config: ContentConfig
   ): Promise<AISearchContent> {
-    // Simulate API call to OpenAI
-    await this.delay(1000 + Math.random() * 2000); // 1-3 second delay
-
-    // Simulate occasional failures
-    if (Math.random() < 0.1) {
-      throw new Error('API timeout - failed to generate content');
+    if (!this.apiKey) {
+      throw new Error('OpenAI API key is required for content generation');
     }
 
-    const template = this.getTemplate(config.templateType);
+    try {
+      const prompt = this.buildPrompt(product, config);
+      const response = await this.callOpenAI(prompt);
+      const parsedContent = this.parseOpenAIResponse(response, product, config);
 
-    return {
-      productId: product.productId,
-      type: 'ai-search',
-      version: '1.0',
-      basicInfo: {
-        scientificName: this.generateScientificName(product.name),
-        commonNames: this.extractCommonNames(product.name),
-        category: product.categories[0] || 'Freshwater Fish',
-        family: this.determineFishFamily(product.name, config.family),
-        origin: this.determineOrigin(product.name),
-        waterType: 'Freshwater'
-      },
-      searchKeywords: this.generateKeywords(product.name),
-      careRequirements: {
-        minTankSize: this.determineTankSize(config.templateType),
-        temperatureRange: this.determineTemperature(config.templateType),
-        phRange: this.determinePH(config.templateType),
-        maxSize: this.determineMaxSize(product.name),
-        diet: this.determineDiet(config.templateType),
-        careLevel: this.determineCareLevel(config.templateType),
-        temperament: this.determineTemperament(config.templateType),
-        socialNeeds: this.determineSocialNeeds(config.templateType),
-        lifespan: this.determineLifespan(config.templateType)
-      },
-      compatibility: {
-        compatibleWith: this.generateCompatibleSpecies(config.templateType),
-        avoidWith: this.generateAvoidSpecies(config.templateType),
-        tankMateCategories: this.generateTankMateCategories(config.templateType)
-      },
-      aiContext: {
-        whyPopular: this.generatePopularityReason(product.name, config.templateType),
-        keySellingPoints: this.generateSellingPoints(config.templateType),
-        commonQuestions: this.generateQA(product.name, config.templateType),
-        alternativeNames: this.generateAlternativeNames(product.name)
-      },
-      relatedProducts: {
-        complementaryProducts: this.generateComplementaryProducts(config.templateType),
-        similarSpecies: this.generateSimilarSpecies(product.name)
-      },
-      breeding: {
-        breedingType: this.determineBreedingType(config.templateType),
-        breedingDifficulty: this.determineBreedingDifficulty(config.templateType),
-        breedingNotes: this.generateBreedingNotes(config.templateType)
-      },
-      metadata: {
-        generatedAt: new Date().toISOString(),
-        lastUpdated: new Date().toISOString(),
-        confidence: this.calculateConfidence(product),
-        sources: ['OpenAI GPT-4', 'Fish Database', 'Care Guides'],
-        fishFamily: config.family,
-        template: config.templateType
+      return parsedContent;
+    } catch (error) {
+      console.error('OpenAI API call failed:', error);
+      throw new Error(`Failed to generate AI content: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  private buildPrompt(product: Product, config: ContentConfig): string {
+    return `You are an expert aquarium specialist writing detailed care information for "${product.name}".
+
+Product Details:
+- Name: ${product.name}
+- Categories: ${product.categories.join(', ')}
+- Template: ${config.templateType}
+- Fish Family: ${config.family}
+
+Generate comprehensive aquarium care information in JSON format with the following structure:
+
+{
+  "basicInfo": {
+    "scientificName": "Actual scientific name",
+    "commonNames": ["Primary name", "Alternative names"],
+    "family": "Actual fish family",
+    "origin": "Natural habitat/geographic origin",
+    "waterType": "Freshwater/Saltwater"
+  },
+  "careRequirements": {
+    "minTankSize": "X gallons minimum",
+    "temperatureRange": "XX-XX°F (XX-XX°C)",
+    "phRange": "X.X-X.X",
+    "maxSize": "X inches",
+    "diet": "Detailed diet information",
+    "careLevel": "Beginner/Intermediate/Advanced",
+    "temperament": "Peaceful/Semi-aggressive/Aggressive",
+    "socialNeeds": "Community details",
+    "lifespan": "X-X years"
+  },
+  "compatibility": {
+    "compatibleWith": ["List of compatible species"],
+    "avoidWith": ["List of incompatible species"],
+    "tankMateCategories": ["Community types"]
+  },
+  "aiContext": {
+    "whyPopular": "Why this fish is popular with aquarists",
+    "keySellingPoints": ["Unique features", "Benefits"],
+    "commonQuestions": [
+      {
+        "question": "Relevant question",
+        "answer": "Detailed answer"
       }
-    };
+    ],
+    "alternativeNames": ["Other names"],
+    "expertTips": ["Professional care tips"]
+  },
+  "breeding": {
+    "breedingDifficulty": "Easy/Moderate/Difficult",
+    "breedingNotes": "Detailed breeding information",
+    "sexingNotes": "How to identify males/females"
+  }
+}
+
+Provide accurate, detailed information specific to this species. Do not use generic placeholders.`;
   }
 
-  private async delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  private async callOpenAI(prompt: string): Promise<string> {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: config.aiModel || 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an expert aquarium specialist. Always respond with valid JSON only, no additional text.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data.choices[0]?.message?.content || '';
   }
 
-  private getTemplate(templateType: TemplateType): any {
+  private parseOpenAIResponse(response: string, product: Product, config: ContentConfig): AISearchContent {
+    try {
+      // Clean the response to extract JSON
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No valid JSON found in OpenAI response');
+      }
+
+      const parsedData = JSON.parse(jsonMatch[0]);
+
+      // Construct the full AISearchContent object
+      return {
+        productId: product.productId,
+        type: 'ai-search',
+        version: '1.0',
+        basicInfo: parsedData.basicInfo,
+        searchKeywords: this.generateSearchKeywords(parsedData.basicInfo, product),
+        careRequirements: parsedData.careRequirements,
+        compatibility: parsedData.compatibility,
+        aiContext: parsedData.aiContext,
+        relatedProducts: [],
+        breeding: parsedData.breeding,
+        metadata: {
+          generatedAt: new Date().toISOString(),
+          lastUpdated: new Date().toISOString(),
+          confidence: 'high',
+          sources: ['OpenAI GPT-4o'],
+          fishFamily: config.family,
+          template: config.templateType
+        }
+      };
+    } catch (error) {
+      console.error('Failed to parse OpenAI response:', error);
+      console.error('Raw response:', response);
+      throw new Error('Failed to parse AI-generated content');
+    }
+  }
+
+  private generateSearchKeywords(basicInfo: any, product: Product): string[] {
+    const keywords = [
+      product.name,
+      basicInfo.scientificName,
+      ...basicInfo.commonNames,
+      basicInfo.family,
+      'aquarium',
+      'fish care',
+      'freshwater'
+    ];
+
+    return [...new Set(keywords.filter(Boolean))];
+  }
+
     // Template configurations would be defined here
     const templates = {
       'cichlid-aggressive': {

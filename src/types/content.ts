@@ -48,7 +48,7 @@ export interface ContentConfig {
   family: FishFamily;
   behavior: FishBehavior;
   templateType: TemplateType;
-  aiModel: 'gpt-4' | 'gpt-4-turbo';
+  aiModel: 'gpt-4o' | 'gpt-4' | 'gpt-4-turbo';
   validation: 'strict' | 'moderate' | 'lenient';
 }
 
