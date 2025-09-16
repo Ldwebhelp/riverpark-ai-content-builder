@@ -5,8 +5,8 @@
 // Base product information from BigCommerce
 export interface Product {
   entityId: number;
+  productId: number;
   name: string;
-  sku?: string;
   price: number;
   categories: string[];
   description: string;
