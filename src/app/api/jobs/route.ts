@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ProcessingJob, JobStatus } from '@/types/content';
 import { v4 as uuidv4 } from 'uuid';
+import { AIContentGenerator } from '@/lib/ai/content-generator';
+import { CatalystClient } from '@/lib/catalyst/client';
 
 // In-memory storage for demo (replace with Supabase in production)
 const jobs: ProcessingJob[] = [];
@@ -93,7 +95,7 @@ async function simulateJobProgress(jobId: string) {
   let processedProducts = 0;
   let currentProductIndex = 0;
 
-  const interval = setInterval(() => {
+  const interval = setInterval(async () => {
     const job = jobs.find(j => j.id === jobId);
     if (!job || job.status !== 'running') {
       clearInterval(interval);
@@ -116,26 +118,53 @@ async function simulateJobProgress(jobId: string) {
     let batchSuccessful = 0;
     let batchFailed = 0;
 
-    processingBatch.forEach((product) => {
-      // Simulate occasional failures (10% chance)
-      const failureChance = Math.random();
-      if (failureChance < 0.1) {
+    // Process each product in the batch
+    for (const product of processingBatch) {
+      try {
+        // Generate AI content
+        const generator = new AIContentGenerator();
+        const aiContent = await generator.generateContent(product, job.config);
+
+        console.log(`✅ Generated AI content for: ${product.name}`);
+
+        // Publish to Catalyst storefront
+        const catalyst = new CatalystClient();
+        const publishSuccess = await catalyst.publishContent(aiContent, product);
+
+        // Store JSON files in memory for the JSON viewer
+        const { populateStorageFromGeneration } = await import('../json-files/route');
+        await populateStorageFromGeneration(product.productId, aiContent, product);
+
+        if (publishSuccess) {
+          batchSuccessful += 1;
+          console.log(`🚀 Published to Catalyst: ${product.name}`);
+        } else {
+          batchFailed += 1;
+          job.errors.push({
+            productId: product.productId,
+            productName: product.name,
+            errorType: 'deployment',
+            message: 'Failed to publish content to Catalyst storefront',
+            timestamp: new Date().toISOString(),
+            retryCount: 0,
+            maxRetries: 3
+          });
+          console.log(`❌ Failed to publish to Catalyst: ${product.name}`);
+        }
+      } catch (error) {
         batchFailed += 1;
         job.errors.push({
           productId: product.productId,
           productName: product.name,
           errorType: 'ai-generation',
-          message: 'Failed to generate content due to API timeout',
+          message: error instanceof Error ? error.message : 'Failed to generate content',
           timestamp: new Date().toISOString(),
           retryCount: 0,
           maxRetries: 3
         });
-        console.log(`Failed to process product: ${product.name}`);
-      } else {
-        batchSuccessful += 1;
-        console.log(`Successfully processed product: ${product.name}`);
+        console.log(`❌ Failed to process product: ${product.name} - ${error}`);
       }
-    });
+    }
 
     // Update progress
     processedProducts += batchSuccessful;

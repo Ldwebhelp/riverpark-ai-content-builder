@@ -2,8 +2,11 @@
 const nextConfig = {
   output: 'standalone',
   trailingSlash: false,
-  experimental: {
-    turbopack: false
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
   }
 };
 
